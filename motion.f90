@@ -86,17 +86,17 @@
                     c_mat(2)=(len_sq(diff12(tempx(1,:),tempx(3,:),l))-r_oh**2)/4
                     c_mat(3)=(len_sq(diff12(tempx(2,:),tempx(3,:),l))-r_hh**2)/4
                     
-                    a_mat(1,1)=(tempm(1)**-1+tempm(2)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(1,:),tempx(2,:),l))
-                    a_mat(1,2)=(tempm(1)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(2,:),l))
-                    a_mat(1,3)=(-tempm(2)**-1)*dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(2,:),l))
+                    a_mat(1,1)=(tempm(1)**(-1)+tempm(2)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(1,:),tempx(2,:),l))
+                    a_mat(1,2)=(tempm(1)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(2,:),l))
+                    a_mat(1,3)=(-tempm(2)**(-1))*dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(2,:),l))
                     
-                    a_mat(2,1)=(tempm(1)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(1,:),tempx(3,:),l))
-                    a_mat(2,2)=(tempm(1)**-1+tempm(3)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(3,:),l))
-                    a_mat(2,3)=(tempm(3)**-1)*dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(3,:),l))
+                    a_mat(2,1)=(tempm(1)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(1,:),tempx(3,:),l))
+                    a_mat(2,2)=(tempm(1)**(-1)+tempm(3)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(3,:),l))
+                    a_mat(2,3)=(tempm(3)**(-1))*dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(1,:),tempx(3,:),l))
                     
-                    a_mat(3,1)=(-tempm(2)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(2,:),tempx(3,:),l))
-                    a_mat(3,2)=(tempm(3)**-1)*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(2,:),tempx(3,:),l))
-                    a_mat(3,3)=(tempm(2)**-1+tempm(3)**-1)* dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(2,:),tempx(3,:),l))
+                    a_mat(3,1)=(-tempm(2)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(2,:),l),diff12(tempx(2,:),tempx(3,:),l))
+                    a_mat(3,2)=(tempm(3)**(-1))*dot_product(diff12(tempx_old(1,:),tempx_old(3,:),l),diff12(tempx(2,:),tempx(3,:),l))
+                    a_mat(3,3)=(tempm(2)**(-1)+tempm(3)**(-1))* dot_product(diff12(tempx_old(2,:),tempx_old(3,:),l),diff12(tempx(2,:),tempx(3,:),l))
                     
                     
                     

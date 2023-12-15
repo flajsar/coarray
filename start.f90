@@ -8,6 +8,7 @@ module start
     
     subroutine ref_units(l)
         real(8),intent(inout)::l
+        real(8)::lj_parameter(2)=0
     
         ener_ref=1.0/avog_num
         time_ref=sqrt(atomic_mass*angstrom**2/ener_ref)
@@ -41,6 +42,19 @@ module start
         models(3,:)=(/4.0,15.99903,0.0    ,1.00811,0.52   ,0.0,-1.04   ,0.9572,1.513900655,104.52,0.15  ,648.5,3.15365/)  !TIP4P
         models(4,:)=(/4.0,15.99903,0.0    ,1.00811,0.52422,0.0,-1.04844,0.9572,1.513900655,104.52,0.125 ,680.946,3.16435/) !TIP4P-Ew
         models(5,:)=(/4.0,15.99903,0.0    ,1.00811,0.5564 ,0.0,-1.1128 ,0.9572,1.513900655,104.52,0.1546,774.3,3.1589/) !TIP4P/2005
+        lj_parameter(2)=2.782
+        lj_parameter(1)=3.2135*unit_charge/(10**3)*avog_num
+        LJ_sphere_parameters(1,:)=lj_parameter
+
+        lj_parameter(2)=3.403
+        lj_parameter(1)=119.7*k_boltz*avog_num
+        LJ_sphere_parameters(2,:)=lj_parameter
+        lj_parameter(2)=3.64
+        lj_parameter(1)=168.7*k_boltz*avog_num       
+        LJ_sphere_parameters(3,:)=lj_parameter
+        lj_parameter(2)=4.07
+        lj_parameter(1)=223.6*k_boltz*avog_num           
+        LJ_sphere_parameters(4,:)=lj_parameter
         mass_o=models(model,2)
         charge_o=models(model,3)
         mass_h=models(model,4)
@@ -54,6 +68,8 @@ module start
         a1=models(model,12)
         a2=models(model,13)
         
+        LJ_atom_sigma=LJ_sphere_parameters(1,1)
+        LJ_atom_eps=LJ_sphere_parameters(1,2)
         
  
             

@@ -256,5 +256,59 @@
                 end do
             end do
         end subroutine
+
+
+
+        subroutine LJ_sphere_correction(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms,LJ_spheres,LJ_spheres_force)
+            implicit none
+            real(8),intent(in)::x(num_images(),mp*N/num_images(),3),particles(mp*N,2),coms(num_images(),mp*N/num_images(),3),LJ_spheres(N_LJ_spheres,3)
+            real(8),intent(in)::l
+            real(8),intent(inout)::a(num_images(),3*n/num_images(),3),co_potencial_lj,co_virial,co_virial_tensor(3,3),LJ_spheres_force(N_LJ_spheres,3)
+            !temp spremenljivke:
+            real(8),allocatable::vf(:,:)
+            real(8)::x1,x2,r,r2,temppot,v1(3),v2(3),mol(mp,3),switch,switch_der,lj_long_range_corr,fcom,force(3)
+            real(8)::vt11,vt12,vt13,vt22,vt23,vt33,potencial_lj_t,virialt,vx12(3),coms_diff(3),a1s,a2s
+            integer::i,j,j1,cim2,cim,start,ending,npi,image
+            allocate(vf(n/num_images(),3))
+            vf=0
+            npi=mp*N/num_images()
+            image=this_image()
+            !zračunamo LJ potencial in sledeče sile med kisiki
+            a1s=sqrt(a1*LJ_sphere_parameters(lj_atom,1))
+            a2s=(a2+LJ_sphere_parameters(lj_atom,2))/2            
+            do j=1,N_LJ_spheres
+                do i=1,npi,mp
+                    vx12=diff12(LJ_spheres(j,:),x(image,i,:),l)
+                    r2=len_sq(vx12)
+                    r=dsqrt(r2)
+                    x1=(a2s/r)**3
+                    x1=x1**2
+                    temppot=4*a1s*x1*(x1-1)
+                    x2=-24*a1s*x1*(2*x1-1)
+                    co_potencial_lj=co_potencial_lj+temppot
+                    fcom=-x2/r2
+                    force=fcom*vx12
+                    vf(int(i/mp)+1,:)=vf(int(i/mp)+1,:)+force
+                    LJ_spheres_force(j,:)=-force+LJ_spheres_force(j,:)
+                    coms_diff=diff12(LJ_spheres(j,:),coms(image,i,:),l)                        
+                    co_virial_tensor(1,1)=co_virial_tensor(1,1)-force(1)*coms_diff(1)
+                    co_virial_tensor(1,2)=co_virial_tensor(1,2)-force(1)*coms_diff(2)
+                    co_virial_tensor(2,1)=co_virial_tensor(2,1)-force(2)*coms_diff(1)
+                    co_virial_tensor(1,3)=co_virial_tensor(1,3)-force(1)*coms_diff(3)
+                    co_virial_tensor(3,1)=co_virial_tensor(3,1)-force(3)*coms_diff(1)
+                    co_virial_tensor(2,2)=co_virial_tensor(2,2)-force(2)*coms_diff(2)
+                    co_virial_tensor(2,3)=co_virial_tensor(2,3)-force(2)*coms_diff(3)
+                    co_virial_tensor(3,2)=co_virial_tensor(3,2)-force(3)*coms_diff(2)
+                    co_virial_tensor(3,3)=co_virial_tensor(3,3)-force(3)*coms_diff(3)
+                end do
+            end do
+            if (mp==4) then
+                do i=1,3*n/num_images(),3
+                    a(image,i,:)=vf(int(i/3)+1,:)+a(image,i,:)
+                end do
+            else
+                a(image,:,:)=a(image,:,:)+vf(:,:)
+            end if
+        end subroutine
 end module
     

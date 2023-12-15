@@ -6,11 +6,10 @@
     use termo_barostat
     implicit none
     contains
-        subroutine equilibration_step(x,v,a,particles,l,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,coms,co_virial)
-            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*]
+        subroutine equilibration_step(x,v,a,particles,l,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,coms,co_virial,LJ_spheres,LJ_spheres_force)
+            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*],LJ_spheres(N_LJ_spheres,3),LJ_spheres_force(N_LJ_spheres,3)
             real(8),intent(inout)::co_potencial_el[*],co_potencial_lj[*],pressure[*],temp[*],co_press_tensor(3,3)[*],co_virial_tensor(3,3)[*],coms(num_images(),mp*N/num_images(),3)[*],co_virial[*]
             integer,intent(in)::step
-            integer::i,j
             
             co_virial_tensor=0
             SYNC ALL
@@ -22,11 +21,13 @@
             call synh_arrays(x)
             call synh_arrays(v)
             a=0
+            LJ_spheres_force=0
             co_potencial_el=0
             co_potencial_lj=0
             call calc_coms(x,particles,l,coms)
             call ewald_sum(x,particles,a,l,co_virial,co_potencial_el,co_virial_tensor,coms)
             call lj_del_pot(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms)
+            call LJ_sphere_correction(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms,LJ_spheres,LJ_spheres_force)
             !call sym_tensor(co_virial_tensor)
             sync all
             call CO_SUM(co_potencial_el)
@@ -53,8 +54,8 @@
             end if
         end subroutine
         
-        subroutine nvt_nh_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,th_eta,co_press_tensor,coms,co_virial_tensor)
-            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*]
+        subroutine nvt_nh_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,th_eta,co_press_tensor,coms,co_virial_tensor,LJ_spheres,LJ_spheres_force)
+            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*],LJ_spheres(N_LJ_spheres,3),LJ_spheres_force(N_LJ_spheres,3)
             real(8),intent(inout)::co_potencial_el[*],co_potencial_lj[*],pressure[*],temp[*],co_press_tensor(3,3)[*],co_virial_tensor(3,3)[*],coms(num_images(),mp*N/num_images(),3)[*],co_virial[*],th_eta[*]
             integer,intent(in)::step
             
@@ -74,11 +75,14 @@
             call synh_arrays(v)
                 !zracunamo sile na novo (z novimi položaji)
             a=0
+            LJ_spheres_force=0
             co_potencial_el=0
             co_potencial_lj=0
             call calc_coms(x,particles,l,coms)
             call ewald_sum(x,particles,a,l,co_virial,co_potencial_el,co_virial_tensor,coms)
             call lj_del_pot(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms)
+            call LJ_sphere_correction(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms,LJ_spheres,LJ_spheres_force)
+
                 !nove sile -> nove hitrosti
             sync all
             call CO_SUM(co_potencial_el)
@@ -105,12 +109,12 @@
             end if
         end subroutine
 !        
-        subroutine npt_mtk_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,th_eta,mtk_nib,coms)
-            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*]
+        subroutine npt_mtk_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,th_eta,mtk_nib,coms,LJ_spheres,LJ_spheres_force)
+            real(8),intent(inout)::x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*n/num_images(),3)[*],a(num_images(),3*n/num_images(),3)[*],particles(mp*n,2),l[*],LJ_spheres(N_LJ_spheres,3),LJ_spheres_force(N_LJ_spheres,3)
             real(8),intent(inout)::co_potencial_el[*],co_potencial_lj[*],pressure[*],temp[*],co_press_tensor(3,3)[*],co_virial_tensor(3,3)[*],coms(num_images(),mp*N/num_images(),3)[*],co_virial[*]
             real(8),intent(inout)::th_eta[*],mtk_nib[*]
             integer,intent(in)::step
-
+            sync all
             !MTK termo/barostat
             call calc_temp(v,particles,temp)
             call calc_pressure(co_virial_tensor,v,l,pressure,particles,x,a,co_press_tensor,temp)
@@ -124,6 +128,7 @@
             call mtk_box(l,mtk_nib)
             
             co_virial_tensor=0
+            sync all
             !uporabimo rattle algoritem
             if (mp==4) then
                 call shift_coms(x,mtk_nib,particles,l,coms)
@@ -137,11 +142,14 @@
             call synh_arrays(v)
                 !zracunamo sile na novo (z novimi položaji)
             a=0
+            LJ_spheres_force=0
             co_potencial_el=0
             co_potencial_lj=0
             call calc_coms(x,particles,l,coms)
             call ewald_sum(x,particles,a,l,co_virial,co_potencial_el,co_virial_tensor,coms)
             call lj_del_pot(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms)
+            call LJ_sphere_correction(x,particles,a,l,co_potencial_lj,co_virial,co_virial_tensor,coms,LJ_spheres,LJ_spheres_force)
+
                 !nove sile -> nove hitrosti
             sync all
             call CO_SUM(co_potencial_el)

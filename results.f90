@@ -24,6 +24,13 @@ module results
         
         write(file_unit3,*)step,l, N/(l*angstrom)**3 * 18.0153*1d-3/avog_num
     end subroutine
+
+    subroutine write_LJSF(LJ_spheres_force,step,file_unit_LJSF)
+        real(8),intent(in)::LJ_spheres_force(N_LJ_spheres,3)
+        integer,intent(in)::step,file_unit_LJSF
+        200 format (1I6,6E32.16)
+        write(file_unit_LJSF,200)step,LJ_spheres_force*force_ref
+    end subroutine
     !
     !
     !subroutine calc_rdf_pict(x,rdf_n,rdf_oh,rdf_hh,l)
