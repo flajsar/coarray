@@ -68,8 +68,8 @@ module start
         a1=models(model,12)
         a2=models(model,13)
         
-        LJ_atom_sigma=LJ_sphere_parameters(1,1)
-        LJ_atom_eps=LJ_sphere_parameters(1,2)
+        LJ_atom_sigma=LJ_sphere_parameters(lj_atom,2)
+        LJ_atom_eps=LJ_sphere_parameters(lj_atom,1)
         
  
             

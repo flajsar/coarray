@@ -274,8 +274,8 @@
             npi=mp*N/num_images()
             image=this_image()
             !zračunamo LJ potencial in sledeče sile med kisiki
-            a1s=sqrt(a1*LJ_sphere_parameters(lj_atom,1))
-            a2s=(a2+LJ_sphere_parameters(lj_atom,2))/2            
+            a1s=sqrt(a1*LJ_atom_eps)
+            a2s=(a2+LJ_atom_sigma)/2            
             do j=1,N_LJ_spheres
                 do i=1,npi,mp
                     vx12=diff12(LJ_spheres(j,:),x(image,i,:),l)

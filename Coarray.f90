@@ -59,20 +59,18 @@ implicit none
         pressure0=1
         TB_strength=1.d-12
     
-        ekv_time_steps=10
-        nvt_time_steps=100
-        npt_time_steps=100
+        ekv_time_steps=1500
+        nvt_time_steps=-1
+        npt_time_steps=10000
 
         !RDF           del_r,rdf_max
         rdf_parameters=(/0.02,8.0/)
         !ewaldova vsota
-        K=10
+        K=7
         !LJ cutoff
-        r_lower=9.0
-        r_upper=9.5
         
         
-        l=(N/rho0+N_LJ_spheres*4/3*pi*LJ_sphere_parameters(lj_atom,2)**3)**(1./3.)
+        l=(N/rho0+N_LJ_spheres*4/3*pi*LJ_atom_sigma**3)**(1./3.)
         !l=2*12.43864445
         call ref_units(l)
         MP=int(models(model,1))
@@ -82,8 +80,13 @@ implicit none
 
         allocate(x(num_images(),mp*N/num_images(),3)[*],v(num_images(),3*N/num_images(),3)[*],a(num_images(),3*N/num_images(),3)[*],coms(num_images(),mp*N/num_images(),3)[*])
         allocate(LJ_spheres(N_LJ_spheres,3),LJ_spheres_force(N_LJ_spheres,3))
-        LJ_spheres(1,:)=l/3
-        LJ_spheres(2,:)=2*l/3
+        LJ_spheres(1,1)=l/2+0.25
+        LJ_spheres(2,1)=l/2-0.25
+
+        LJ_spheres(1,2)=l/2
+        LJ_spheres(2,2)=l/2
+        LJ_spheres(1,3)=l/2
+        LJ_spheres(2,3)=l/2
         
         Sync All
         if (this_image()==1) then
@@ -123,10 +126,12 @@ implicit none
             print *, "elapsed time: ", real(ending - beginning) / real(rate)
         end if
         
-        do step=0,ekv_time_steps
+        do step=0,1500
             call equilibration_step(x,v,a,particles,l,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,coms,co_virial,LJ_spheres,LJ_spheres_force)
         end do
         
+
+
         do step=0,nvt_time_steps
             call nvt_nh_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,th_eta,co_press_tensor,coms,co_virial_tensor,LJ_spheres,LJ_spheres_force)
             if (this_image()==1) then
@@ -138,6 +143,15 @@ implicit none
             call calc_dipole(x,particles,dipole,file_unitDIP,step,l)
         end do
         !
+    do rate=0,25
+        LJ_spheres(1,1)=LJ_spheres(1,1)+0.25*(1-kronecker(1,rate+1))
+        LJ_spheres(2,1)=LJ_spheres(2,1)-0.25*(1-kronecker(1,rate+1))
+        if (this_image()==1) then
+            write(file_unit_LJSF,*)sqrt(len_sq(LJ_spheres(1,:)-LJ_spheres(2,:)))
+        end if
+        do step=0,ekv_time_steps
+            call equilibration_step(x,v,a,particles,l,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,coms,co_virial,LJ_spheres,LJ_spheres_force)
+        end do
         do step=0,npt_time_steps
             call npt_mtk_step(x,v,a,particles,l,co_virial,co_potencial_el,co_potencial_lj,step,pressure,temp,co_press_tensor,co_virial_tensor,th_eta,mtk_nib,coms,LJ_spheres,LJ_spheres_force)
             if (this_image()==1) then
@@ -148,5 +162,7 @@ implicit none
             end if
             call calc_dipole(x,particles,dipole,file_unitDIP,step,l)
         end do
+        
+    end do
 end program Coarray
 
